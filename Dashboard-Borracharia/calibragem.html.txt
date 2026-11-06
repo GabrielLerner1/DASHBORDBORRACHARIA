@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Calibragem de Pneus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg:#F0F4F8;--card:#FFFFFF;--border:#E2E8F0;
+      --shadow:0 1px 8px rgba(15,30,60,.07);
+      --shadow-md:0 4px 24px rgba(15,30,60,.11);
+      --accent:#1A5CFF;--text:#0F1E3C;--muted:#64748B;
+      --gap:16px;--radius:14px;
+      --font:'Nunito',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:20px;font-size:15px;}
+
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 22px;box-shadow:var(--shadow);}
+    .header-left h1{font-family:var(--font);font-size:1.75rem;font-weight:800;letter-spacing:-.4px;color:var(--text);}
+    .header-left p{font-size:.83rem;color:var(--muted);margin-top:3px;}
+    .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    #last-update{font-size:.78rem;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:6px 14px;border-radius:999px;}
+    #btn-refresh{display:flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;padding:9px 20px;border-radius:999px;font-family:var(--font);font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s;}
+    #btn-refresh:hover{background:#0e47d4;}
+
+    .filters{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);}
+    .filter-group{display:flex;flex-direction:column;gap:5px;}
+    .filter-group label{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+    .filter-sep{width:1px;height:52px;background:var(--border);margin:0 2px;align-self:center;}
+    #btn-limpar{font-family:var(--font);font-size:.8rem;font-weight:600;color:var(--accent);background:none;border:1.5px solid var(--accent);padding:7px 14px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s;align-self:flex-end;white-space:nowrap;}
+    #btn-limpar:hover{background:var(--accent);color:#fff;}
+    .filter-count{margin-left:auto;font-size:.78rem;font-weight:700;background:#EEF2FF;color:#4338CA;padding:5px 14px;border-radius:999px;white-space:nowrap;align-self:flex-end;}
+
+    .fc-wrap{position:relative;min-width:130px;}
+    .fc-input{width:100%;font-family:var(--font);font-size:.84rem;color:var(--text);background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:7px 28px 7px 10px;cursor:text;transition:border-color .2s,box-shadow .2s;outline:none;}
+    .fc-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,92,255,.1);}
+    .fc-input.has-value{border-color:var(--accent);background:#EEF2FF;color:var(--accent);font-weight:600;}
+    .fc-arrow{position:absolute;right:9px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);}
+    .fc-clear{position:absolute;right:9px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--muted);font-size:.9rem;display:none;line-height:1;}
+    .fc-input.has-value ~ .fc-arrow{display:none;}
+    .fc-input.has-value ~ .fc-clear{display:block;}
+    .fc-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;max-width:300px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md);z-index:999;max-height:220px;overflow-y:auto;display:none;}
+    .fc-dropdown.open{display:block;}
+    .fc-option{padding:8px 12px;font-size:.83rem;cursor:pointer;transition:background .1s;white-space:nowrap;color:var(--text);}
+    .fc-option:hover{background:#EEF2FF;color:var(--accent);}
+    .fc-option.selected{background:#DBEAFE;color:var(--accent);font-weight:600;}
+    .fc-option.empty{color:var(--muted);cursor:default;font-style:italic;}
+    .fc-option.unavailable{color:#CBD5E1;cursor:not-allowed;text-decoration:line-through;font-style:italic;}
+    .fc-option.unavailable:hover{background:transparent;color:#CBD5E1;}
+    .fc-section-label{padding:5px 12px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;background:#F8FAFF;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+    .fc-option em{font-style:normal;font-weight:700;color:var(--accent);}
+
+    .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--gap);margin-bottom:var(--gap);}
+    .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 16px 18px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px;min-height:130px;}
+    .kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--kpi-color,var(--accent));border-radius:0 0 var(--radius) var(--radius);}
+    .kpi-emoji{font-size:1.5rem;line-height:1;margin-bottom:2px;}
+    .kpi-label{font-size:.76rem;color:var(--muted);font-weight:500;line-height:1.4;letter-spacing:.01em;}
+    .kpi-value{font-weight:800;color:var(--text);line-height:1.15;font-size:clamp(.95rem,1.5vw,1.45rem);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .kpi-sub{font-size:.72rem;color:var(--muted);line-height:1.3;}
+
+    .main-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-bottom:var(--gap);}
+    .main-grid-bottom{display:grid;grid-template-columns:1fr 380px;gap:var(--gap);}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;}
+    .card.full{grid-column:1/-1;}
+    .card-title{font-family:var(--font);font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+    .card-title .click-badge{font-size:.62rem;background:#EEF2FF;color:#4338CA;padding:2px 8px;border-radius:999px;font-weight:600;letter-spacing:0;text-transform:none;}
+    .chart-wrap{position:relative;width:100%;cursor:pointer;}
+
+    .table-wrap{overflow-x:auto;max-height:360px;overflow-y:auto;}
+    table{width:100%;border-collapse:collapse;font-size:.8rem;}
+    thead th{font-family:var(--font);font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;position:sticky;top:0;background:#fff;z-index:1;}
+    tbody tr{cursor:pointer;transition:background .12s;}
+    tbody tr:hover{background:#EEF2FF;}
+    tbody tr.selected{background:#DBEAFE!important;}
+    tbody td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;line-height:1.35;}
+
+    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.69rem;font-weight:700;white-space:nowrap;}
+    .badge-sim{background:#DCFCE7;color:#166534;}
+    .badge-nao{background:#FEE2E2;color:#991B1B;}
+    .badge-nd{background:#F1F5F9;color:#64748B;}
+    .badge-cavalo{background:#E0E7FF;color:#3730A3;}
+    .badge-carreta{background:#FCE7F3;color:#9D174D;}
+    .badge-outro{background:#FEF3C7;color:#92400E;}
+
+    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0F1E3C;color:#fff;padding:10px 22px;border-radius:999px;font-size:.82rem;font-weight:500;z-index:500;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap;}
+    #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+    .click-hint{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:10px;}
+    .click-hint span{background:var(--card);border:1px solid var(--border);padding:3px 12px;border-radius:999px;}
+
+    #msg-overlay{display:none;position:fixed;inset:0;background:rgba(240,244,248,.94);z-index:200;align-items:center;justify-content:center;}
+    #msg-overlay.visible{display:flex;}
+    .msg-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:36px 48px;text-align:center;box-shadow:var(--shadow-md);max-width:480px;}
+    .msg-box .icon{font-size:2.4rem;margin-bottom:12px;}
+    .msg-box h2{font-family:var(--font);font-size:1.1rem;margin-bottom:8px;}
+    .msg-box p{font-size:.83rem;color:var(--muted);line-height:1.65;word-break:break-all;}
+
+    .rank-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+    .rank-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:var(--bg);border:1px solid var(--border);cursor:pointer;transition:background .12s;}
+    .rank-item:hover{background:#EEF2FF;border-color:var(--accent);}
+    .rank-item.selected{background:#DBEAFE;border-color:var(--accent);}
+    .rank-num{font-family:var(--font);font-size:.7rem;font-weight:800;color:var(--muted);width:18px;flex-shrink:0;text-align:center;}
+    .rank-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:999px;overflow:hidden;}
+    .rank-bar{height:100%;border-radius:999px;background:var(--accent);transition:width .4s ease;}
+    .rank-placa{font-size:.8rem;font-weight:700;color:var(--text);white-space:nowrap;}
+    .rank-qtd{font-size:.75rem;font-weight:700;color:var(--accent);white-space:nowrap;min-width:28px;text-align:right;}
+
+    @media(max-width:1100px){.main-grid,.main-grid-bottom{grid-template-columns:1fr}}
+    @media(max-width:640px){body{padding:12px}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div id="msg-overlay">
+  <div class="msg-box">
+    <div class="icon" id="msg-icon">⏳</div>
+    <h2 id="msg-title">Carregando dados…</h2>
+    <p id="msg-body">Buscando informações da planilha. Aguarde.</p>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-left">
+    <h1>🔧 Calibragem</h1>
+    <p>Gestão de pneus · Dados em tempo real via Google Sheets</p>
+  </div>
+  <div class="header-right">
+    <span id="last-update">Última atualização: —</span>
+    <button id="btn-refresh" onclick="loadData()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+      </svg>
+      Atualizar Dados
+    </button>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="filter-group"><label>Placa</label><div class="fc-wrap" id="fc-placa"></div></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group"><label>Tipo</label><div class="fc-wrap" id="fc-tipo"></div></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group"><label>Motorista</label><div class="fc-wrap" id="fc-motorista"></div></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group"><label>Ano</label><div class="fc-wrap" id="fc-ano"></div></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group"><label>Mês</label><div class="fc-wrap" id="fc-mes"></div></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group"><label>Calibragem</label><div class="fc-wrap" id="fc-calibragem"></div></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group"><label>Reaperto</label><div class="fc-wrap" id="fc-reaperto"></div></div>
+  <div class="filter-sep"></div>
+  <div class="filter-group"><label>Mapeamento</label><div class="fc-wrap" id="fc-mapeamento"></div></div>
+  <button id="btn-limpar" onclick="clearFilters()">✕ Limpar filtros</button>
+  <span class="filter-count" id="filter-count">— registros</span>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card" style="--kpi-color:#1A5CFF">
+    <span class="kpi-emoji">📋</span>
+    <div class="kpi-label">Total de Registros</div>
+    <div class="kpi-value" id="kpi-total">—</div>
+    <div class="kpi-sub">calibragens filtradas</div>
+  </div>
+  <div class="kpi-card" style="--kpi-color:#22C55E;cursor:pointer" onclick="fcSetValue('fc-calibragem','SIM','SIM')">
+    <span class="kpi-emoji">🔵</span>
+    <div class="kpi-label">Calibragem OK</div>
+    <div class="kpi-value" id="kpi-calib-sim">—</div>
+    <div class="kpi-sub" id="kpi-calib-sim-pct"></div>
+  </div>
+  <div class="kpi-card" style="--kpi-color:#22C55E;cursor:pointer" onclick="fcSetValue('fc-reaperto','SIM','SIM')">
+    <span class="kpi-emoji">🔩</span>
+    <div class="kpi-label">Reaperto OK</div>
+    <div class="kpi-value" id="kpi-reap-sim">—</div>
+    <div class="kpi-sub" id="kpi-reap-sim-pct"></div>
+  </div>
+  <div class="kpi-card" style="--kpi-color:#00C49F;cursor:pointer" onclick="fcSetValue('fc-mapeamento','SIM','SIM')">
+    <span class="kpi-emoji">🗺️</span>
+    <div class="kpi-label">Mapeamento OK</div>
+    <div class="kpi-value" id="kpi-map-sim">—</div>
+    <div class="kpi-sub" id="kpi-map-sim-pct"></div>
+  </div>
+  <div class="kpi-card" style="--kpi-color:#F59E0B">
+    <span class="kpi-emoji">🚛</span>
+    <div class="kpi-label">Placas Únicas</div>
+    <div class="kpi-value" id="kpi-placas">—</div>
+    <div class="kpi-sub">equipamentos monitorados</div>
+  </div>
+</div>
+
+<p class="click-hint"><span>💡 Clique em qualquer barra, ponto do gráfico ou linha da tabela para filtrar · Filtros em cascata ativos</span></p>
+
+<div class="main-grid">
+  <div class="card">
+    <div class="card-title">Calibragens por Mês <span class="click-badge">clicável</span></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="chart-mes"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Conformidade Geral (%) <span class="click-badge">clicável</span></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="chart-conformidade"></canvas></div>
+  </div>
+</div>
+
+<div class="main-grid-bottom">
+  <div class="card">
+    <div class="card-title">Registros</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Placa</th>
+            <th>Tipo</th>
+            <th>Motorista</th>
+            <th>Calibragem</th>
+            <th>Reaperto</th>
+            <th>Mapeamento</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-registros"></tbody>
+       </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Ranking de Placas <span class="click-badge">clicável</span></div>
+    <div class="rank-list" id="rank-placas"></div>
+  </div>
+</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTs_LJqO1-0to_WCLSAkH0b07bsLl5eOrtS0YHdzlgOhS0KE9TLAsUNAREArSXhQ57Zvwo09l1Ua-n9/pub?gid=899403147&single=true&output=csv";
+
+let allRows = [], keys = {}, chartMes, chartConf;
+const ALL_FILTER_IDS = ['fc-placa','fc-tipo','fc-motorista','fc-ano','fc-mes','fc-calibragem','fc-reaperto','fc-mapeamento'];
+const MESES_NOME = {'01':'Janeiro','02':'Fevereiro','03':'Março','04':'Abril','05':'Maio','06':'Junho','07':'Julho','08':'Agosto','09':'Setembro','10':'Outubro','11':'Novembro','12':'Dezembro'};
+const MESES_ABREV = {'01':'Jan','02':'Fev','03':'Mar','04':'Abr','05':'Mai','06':'Jun','07':'Jul','08':'Ago','09':'Set','10':'Out','11':'Nov','12':'Dez'};
+
+function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\/\\]+/g,'').replace(/[\s_\-\.]+/g,'');}
+
+function findKey(headers,target){
+  // Tenta match exato primeiro, depois match normalizado
+  const t=norm(target);
+  return headers.find(h=>h===target) || 
+         headers.find(h=>norm(h)===t) || 
+         headers.find(h=>norm(h).includes(t)||t.includes(norm(h))) || 
+         null;
+}
+
+// Mapa de meses em português para número
+const MESES_PT = {
+  'jan':1, 'jan.':1, 'janeiro':1,
+  'fev':2, 'fev.':2, 'fevereiro':2,
+  'mar':3, 'mar.':3, 'março':3, 'marco':3,
+  'abr':4, 'abr.':4, 'abril':4,
+  'mai':5, 'mai.':5, 'maio':5,
+  'jun':6, 'jun.':6, 'junho':6,
+  'jul':7, 'jul.':7, 'julho':7,
+  'ago':8, 'ago.':8, 'agosto':8,
+  'set':9, 'set.':9, 'setembro':9,
+  'out':10, 'out.':10, 'outubro':10,
+  'nov':11, 'nov.':11, 'novembro':11,
+  'dez':12, 'dez.':12, 'dezembro':12
+};
+
+// FUNÇÃO CORRIGIDA: Trata especificamente o formato "DD de MÊS de AAAA"
+function toDate(v){
+  if(!v||!String(v).trim()) return null;
+  let s=String(v).trim();
+  
+  console.log('Tentando converter data:', s);
+  
+  // Formato "DD de MÊS de AAAA" ou "DD de MÊS. de AAAA"
+  const mPt = s.match(/^(\d{1,2})\s+de\s+([a-zç]+)\.?\s+de\s+(\d{2,4})$/i);
+  if(mPt){
+    const day=parseInt(mPt[1],10);
+    const mesNome=mPt[2].toLowerCase().replace(/\./g,'');
+    const mesNum=MESES_PT[mesNome];
+    const y=mPt[3].length===2?2000+parseInt(mPt[3],10):parseInt(mPt[3],10);
+    
+    if(mesNum){
+      const d=new Date(y, mesNum-1, day);
+      if(!isNaN(d.getTime())){
+        console.log('Data convertida (formato PT):', d);
+        return d;
+      }
+    }
+  }
+  
+  // Formato DD/MM/YYYY ou DD-MM-YYYY
+  const mSlash = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if(mSlash){
+    const day=parseInt(mSlash[1],10), mon=parseInt(mSlash[2],10);
+    const y=mSlash[3].length===2?2000+parseInt(mSlash[3],10):parseInt(mSlash[3],10);
+    const d=new Date(y, mon-1, day);
+    if(!isNaN(d.getTime())) {
+      console.log('Data convertida (formato BR):', d);
+      return d;
+    }
+  }
+  
+  // Formato YYYY-MM-DD (ISO)
+  const mIso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if(mIso){
+    const y=parseInt(mIso[1],10), mon=parseInt(mIso[2],10), day=parseInt(mIso[3],10);
+    const d=new Date(y, mon-1, day);
+    if(!isNaN(d.getTime())) {
+      console.log('Data convertida (formato ISO):', d);
+      return d;
+    }
+  }
+  
+  // Última tentativa: new Date() direto
+  const d=new Date(s);
+  if(!isNaN(d.getTime())){
+    console.log('Data convertida (new Date):', d);
+    return d;
+  }
+  
+  console.log('Falha ao converter data:', s);
+  return null;
+}
+
+function parseBool(v){
+  const n=norm(v||'');
+  if(n==='sim'||n==='s'||n==='ok'||n==='x') return 'SIM';
+  if(n==='nao'||n==='não'||n==='no'||n==='n'||n==='não ok'||n==='nãook'||n==='naook') return 'NÃO';
+  if(n===''||n==='-'||n==='nd'||n==='na'||n==='naoaplicavel') return 'N.D.';
+  return 'NÃO';
+}
+
+function getTipoBadge(tipo){
+  const t = (tipo||'').toUpperCase();
+  if(t === 'CAVALO') return '<span class="badge badge-cavalo">CAVALO</span>';
+  if(t === 'CARRETA') return '<span class="badge badge-carreta">CARRETA</span>';
+  if(t === 'TRUCK') return '<span class="badge badge-outro">TRUCK</span>';
+  if(t) return '<span class="badge badge-outro">'+t+'</span>';
+  return '<span class="badge badge-outro">—</span>';
+}
+
+function destroyChart(ref){try{if(ref)ref.destroy();}catch(_){}return null;}
+
+function showMsg(icon,title,body){
+  document.getElementById('msg-icon').textContent=icon;
+  document.getElementById('msg-title').textContent=title;
+  document.getElementById('msg-body').textContent=body;
+  document.getElementById('msg-overlay').classList.add('visible');
+}
+
+function hideMsg(){
+  document.getElementById('msg-overlay').classList.remove('visible');
+}
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function getRowFieldValue(r, filterId){
+  switch(filterId){
+    case 'fc-placa':      return (r[keys.placa]||'').trim().toUpperCase();
+    case 'fc-tipo':       return (r[keys.tipo]||'').trim().toUpperCase();
+    case 'fc-motorista':  return (r[keys.motorista]||'').trim();
+    case 'fc-ano':        { const d=toDate(r[keys.data]); return d?String(d.getFullYear()):null; }
+    case 'fc-mes':        { const d=toDate(r[keys.data]); return d?String(d.getMonth()+1).padStart(2,'0'):null; }
+    case 'fc-calibragem': return parseBool(r[keys.calibragem]);
+    case 'fc-reaperto':   return parseBool(r[keys.reaperto]);
+    case 'fc-mapeamento': return parseBool(r[keys.mapeamento]);
+    default: return null;
+  }
+}
+
+function getRowsExcluding(excludeId){
+  return allRows.filter(r=>{
+    for(const id of ALL_FILTER_IDS){
+      if(id===excludeId) continue;
+      const val=FC[id]?.value; if(!val) continue;
+      if(getRowFieldValue(r,id)!==val) return false;
+    }
+    return true;
+  });
+}
+
+function getFilteredRows(){
+  return allRows.filter(r=>{
+    for(const id of ALL_FILTER_IDS){
+      const val=FC[id]?.value; if(!val) continue;
+      if(getRowFieldValue(r,id)!==val) return false;
+    }
+    return true;
+  });
+}
+
+function updateAvailableOptions(){
+  for(const id of ALL_FILTER_IDS){
+    if(!FC[id]) continue;
+    const rows=getRowsExcluding(id);
+    const avail=new Set();
+    rows.forEach(r=>{const v=getRowFieldValue(r,id);if(v) avail.add(v);});
+    FC[id].availableOptions=FC[id].allOptions.filter(o=>avail.has(o));
+  }
+}
+
+const FC={};
+
+function fcCreate(wrapId, allOptions, placeholder){
+  const wrap=document.getElementById(wrapId); if(!wrap) return;
+  wrap.innerHTML='';
+  const input=document.createElement('input');
+  input.type='text'; input.className='fc-input';
+  input.placeholder=placeholder||'Todos'; input.autocomplete='off';
+  const arrow=document.createElement('span');
+  arrow.className='fc-arrow';
+  arrow.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+  const clearBtn=document.createElement('span');
+  clearBtn.className='fc-clear'; clearBtn.textContent='×'; clearBtn.title='Limpar';
+  clearBtn.onclick=(e)=>{e.stopPropagation();fcSetValue(wrapId,'','');};
+  const dropdown=document.createElement('div'); dropdown.className='fc-dropdown';
+  wrap.appendChild(input); wrap.appendChild(arrow); wrap.appendChild(clearBtn); wrap.appendChild(dropdown);
+  FC[wrapId]={value:'',allOptions:[...allOptions],availableOptions:[...allOptions]};
+  input.addEventListener('focus',()=>{fcRenderOptions(wrapId,input.value);dropdown.classList.add('open');});
+  input.addEventListener('input',()=>{
+    fcRenderOptions(wrapId,input.value); dropdown.classList.add('open');
+    if(wrapId==='fc-mes'){
+      const typed=input.value.toLowerCase();
+      const matchNum=FC[wrapId].allOptions.find(o=>(MESES_NOME[o]||'').toLowerCase()===typed);
+      if(!matchNum){FC[wrapId].value='';input.classList.remove('has-value');}
+    } else {
+      const exact=FC[wrapId].allOptions.find(o=>o.toLowerCase()===input.value.toLowerCase());
+      if(!exact){FC[wrapId].value='';input.classList.remove('has-value');}
+    }
+  });
+  document.addEventListener('click',(e)=>{
+    if(!wrap.contains(e.target)){
+      dropdown.classList.remove('open');
+      const v=FC[wrapId].value||'';
+      input.value=wrapId==='fc-mes'&&v?(MESES_NOME[v]||v):v;
+    }
+  });
+}
+
+function fcRenderOptions(wrapId, query){
+  const wrap=document.getElementById(wrapId); if(!wrap) return;
+  const dropdown=wrap.querySelector('.fc-dropdown');
+  const q=(query||'').toLowerCase().trim();
+  const state=FC[wrapId]; if(!state) return;
+  const available=new Set(state.availableOptions);
+  const getLbl=o=>wrapId==='fc-mes'?(MESES_NOME[o]||o):o;
+  const filteredAvail=q?[...available].filter(o=>getLbl(o).toLowerCase().includes(q)):[...available];
+  const filteredUnavail=q?state.allOptions.filter(o=>!available.has(o)&&getLbl(o).toLowerCase().includes(q)):state.allOptions.filter(o=>!available.has(o));
+  dropdown.innerHTML='';
+  const allOpt=document.createElement('div');
+  allOpt.className='fc-option'+(state.value===''?' selected':'');
+  allOpt.textContent='Todos'; allOpt.onclick=()=>fcSetValue(wrapId,'','');
+  dropdown.appendChild(allOpt);
+  if(filteredAvail.length===0&&filteredUnavail.length===0){
+    const empty=document.createElement('div'); empty.className='fc-option empty'; empty.textContent='Nenhum resultado'; dropdown.appendChild(empty); return;
+  }
+  filteredAvail.forEach(opt=>{
+    const div=document.createElement('div');
+    div.className='fc-option'+(state.value===opt?' selected':'');
+    const lbl=wrapId==='fc-mes'?(MESES_NOME[opt]||opt):opt;
+    if(q){const idx=lbl.toLowerCase().indexOf(q);if(idx>=0)div.innerHTML=lbl.slice(0,idx)+'<em>'+lbl.slice(idx,idx+q.length)+'</em>'+lbl.slice(idx+q.length);else div.textContent=lbl;}
+    else div.textContent=lbl;
+    div.onclick=()=>fcSetValue(wrapId,opt,lbl);
+    dropdown.appendChild(div);
+  });
+  if(filteredUnavail.length>0){
+    const sep=document.createElement('div'); sep.className='fc-section-label'; sep.textContent='Sem resultado com filtros atuais'; dropdown.appendChild(sep);
+    filteredUnavail.forEach(opt=>{
+      const div=document.createElement('div'); div.className='fc-option unavailable';
+      div.textContent=wrapId==='fc-mes'?(MESES_NOME[opt]||opt):opt;
+      div.title='Nenhum registro disponível com os filtros ativos'; dropdown.appendChild(div);
+    });
+  }
+}
+
+function fcSetValue(wrapId, value, label){
+  const wrap=document.getElementById(wrapId); if(!wrap) return;
+  const input=wrap.querySelector('.fc-input');
+  const dropdown=wrap.querySelector('.fc-dropdown');
+  if(!FC[wrapId]) return;
+  if(value&&!FC[wrapId].availableOptions.includes(value)){showToast('⚠️ Sem registros com os filtros atuais');return;}
+  const prev=FC[wrapId].value;
+  if(prev===value&&value!==''){
+    FC[wrapId].value=''; input.value=''; input.classList.remove('has-value'); showToast('Filtro removido');
+  } else {
+    FC[wrapId].value=value;
+    const displayLabel=wrapId==='fc-mes'&&value?(MESES_NOME[value]||label||value):(label||value);
+    input.value=displayLabel; input.classList.toggle('has-value',value!=='');
+    if(value) showToast(`Filtro: ${displayLabel}`);
+  }
+  if(dropdown) dropdown.classList.remove('open');
+  applyFilters();
+}
+
+function parseCSVRobust(raw){
+  const lines=raw.split(/\r?\n/);
+  
+  function parseLine(line){
+    const fields=[];
+    let cur='',inQ=false;
+    
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){
+        if(inQ&&line[i+1]==='"'){
+          cur+='"';
+          i++;
+        }else{
+          inQ=!inQ;
+        }
+      }
+      else if(ch===','&&!inQ){
+        fields.push(cur.trim());
+        cur='';
+      }
+      else{
+        cur+=ch;
+      }
+    }
+    fields.push(cur.trim());
+    return fields;
+  }
+  
+  if(lines.length<2){
+    console.error('CSV muito curto');
+    return {headers:[],rows:[]};
+  }
+  
+  const headers=parseLine(lines[0]);
+  console.log('Headers encontrados:', headers);
+  
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const ln=lines[i].trim();
+    if(!ln) continue;
+    
+    const vals=parseLine(ln);
+    
+    if(vals.every(v=>!v)) continue;
+    
+    const obj={};
+    headers.forEach((h,idx)=>{
+      obj[h]=vals[idx]||'';
+    });
+    rows.push(obj);
+  }
+  
+  console.log(`Total de ${rows.length} linhas de dados`);
+  if(rows.length>0) console.log('Primeira linha:', rows[0]);
+  
+  return {headers,rows};
+}
+
+function initFilters(rows){
+  const uniq=(fn)=>[...new Set(rows.map(fn).filter(Boolean))].sort();
+  
+  fcCreate('fc-placa', uniq(r=>(r[keys.placa]||'').trim().toUpperCase()));
+  fcCreate('fc-tipo', uniq(r=>(r[keys.tipo]||'').trim().toUpperCase()));
+  fcCreate('fc-motorista', uniq(r=>(r[keys.motorista]||'').trim()));
+  fcCreate('fc-ano', uniq(r=>{
+    const d=toDate(r[keys.data]);
+    return d?String(d.getFullYear()):null;
+  }));
+  fcCreate('fc-mes', ['01','02','03','04','05','06','07','08','09','10','11','12'].filter(m=>
+    rows.some(r=>{
+      const d=toDate(r[keys.data]);
+      return d&&String(d.getMonth()+1).padStart(2,'0')===m;
+    })
+  ));
+  fcCreate('fc-calibragem',['SIM','NÃO','N.D.']);
+  fcCreate('fc-reaperto',['SIM','NÃO','N.D.']);
+  fcCreate('fc-mapeamento',['SIM','NÃO','N.D.']);
+}
+
+function applyFilters(){
+  updateAvailableOptions();
+  const filtered=getFilteredRows();
+  document.getElementById('filter-count').textContent=`${filtered.length} registro${filtered.length!==1?'s':''}`;
+  renderAll(filtered);
+}
+
+function clearFilters(){
+  ALL_FILTER_IDS.forEach(id=>{
+    if(FC[id]){
+      FC[id].value='';
+      const wrap=document.getElementById(id);
+      if(wrap){
+        const inp=wrap.querySelector('.fc-input');
+        if(inp){
+          inp.value='';
+          inp.classList.remove('has-value');
+        }
+      }
+    }
+  });
+  applyFilters();
+  showToast('Todos os filtros removidos');
+}
+
+function renderAll(rows){
+  renderKPIs(rows);
+  renderChartMes(rows);
+  renderChartConformidade(rows);
+  renderTabela(rows);
+  renderRanking(rows);
+}
+
+function renderKPIs(rows){
+  const total=rows.length;
+  let calibSim=0,reapSim=0,mapSim=0;
+  const placas=new Set();
+  
+  rows.forEach(r=>{
+    if(parseBool(r[keys.calibragem])==='SIM') calibSim++;
+    if(parseBool(r[keys.reaperto])==='SIM') reapSim++;
+    if(parseBool(r[keys.mapeamento])==='SIM') mapSim++;
+    const p=(r[keys.placa]||'').trim();
+    if(p) placas.add(p.toUpperCase());
+  });
+  
+  const pct=(n)=>total?`${((n/total)*100).toFixed(1)}% do total`:'';
+  
+  document.getElementById('kpi-total').textContent=total.toLocaleString('pt-BR');
+  document.getElementById('kpi-calib-sim').textContent=calibSim.toLocaleString('pt-BR');
+  document.getElementById('kpi-calib-sim-pct').textContent=pct(calibSim);
+  document.getElementById('kpi-reap-sim').textContent=reapSim.toLocaleString('pt-BR');
+  document.getElementById('kpi-reap-sim-pct').textContent=pct(reapSim);
+  document.getElementById('kpi-map-sim').textContent=mapSim.toLocaleString('pt-BR');
+  document.getElementById('kpi-map-sim-pct').textContent=pct(mapSim);
+  document.getElementById('kpi-placas').textContent=placas.size.toLocaleString('pt-BR');
+}
+
+function renderChartMes(rows){
+  const map={};
+  
+  rows.forEach(r=>{
+    const d=toDate(r[keys.data]);
+    if(!d||isNaN(d)) return;
+    
+    const mm=String(d.getMonth()+1).padStart(2,'0');
+    const lbl=`${MESES_ABREV[mm]}/${d.getFullYear()}`;
+    
+    if(!map[lbl]) map[lbl]={total:0,sim:0};
+    map[lbl].total++;
+    if(parseBool(r[keys.calibragem])==='SIM') map[lbl].sim++;
+  });
+  
+  const abrevVals=Object.values(MESES_ABREV);
+  const labels=Object.keys(map).sort((a,b)=>{
+    const [ma,ya]=a.split('/');
+    const [mb,yb]=b.split('/');
+    const ia=abrevVals.indexOf(ma),ib=abrevVals.indexOf(mb);
+    return new Date(ya,ia<0?0:ia)-new Date(yb,ib<0?0:ib);
+  });
+  
+  chartMes=destroyChart(chartMes);
+  chartMes=new Chart(document.getElementById('chart-mes').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {
+          label:'Total',
+          data:labels.map(l=>map[l].total),
+          backgroundColor:'rgba(26,92,255,.25)',
+          borderColor:'#1A5CFF',
+          borderWidth:1.5,
+          borderRadius:4,
+          borderSkipped:false
+        },
+        {
+          label:'Calibragem OK',
+          data:labels.map(l=>map[l].sim),
+          backgroundColor:'rgba(34,197,94,.75)',
+          borderRadius:4,
+          borderSkipped:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      onClick:(e,els)=>{
+        if(!els.length) return;
+        const lbl=labels[els[0].index];
+        const [ma,yyyy]=lbl.split('/');
+        const mNum=Object.keys(MESES_ABREV).find(k=>MESES_ABREV[k]===ma);
+        if(mNum){
+          fcSetValue('fc-ano',yyyy,yyyy);
+          fcSetValue('fc-mes',mNum,MESES_NOME[mNum]||mNum);
+        }
+      },
+      plugins:{
+        legend:{position:'bottom',labels:{font:{family:'Nunito',size:11},boxWidth:12}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:'Nunito',size:11},color:'#64748B'}},
+        y:{grid:{color:'#E2E8F0'},ticks:{font:{family:'Nunito',size:11},color:'#64748B',precision:0}}
+      }
+    }
+  });
+}
+
+function renderChartConformidade(rows){
+  const total=rows.length||1;
+  const calibSim=rows.filter(r=>parseBool(r[keys.calibragem])==='SIM').length;
+  const reapSim=rows.filter(r=>parseBool(r[keys.reaperto])==='SIM').length;
+  const mapSim=rows.filter(r=>parseBool(r[keys.mapeamento])==='SIM').length;
+  const pct=(n)=>total?+((n/total)*100).toFixed(1):0;
+  
+  chartConf=destroyChart(chartConf);
+  chartConf=new Chart(document.getElementById('chart-conformidade').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:['Calibragem','Reaperto Rodas','Mapeamento Pneus'],
+      datasets:[{
+        label:'Conformidade (%)',
+        data:[pct(calibSim),pct(reapSim),pct(mapSim)],
+        backgroundColor:['rgba(26,92,255,.8)','rgba(0,196,159,.8)','rgba(245,158,11,.8)'],
+        hoverBackgroundColor:['#1A5CFF','#00C49F','#F59E0B'],
+        borderRadius:8,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      onClick:(e,els)=>{
+        if(!els.length) return;
+        const idx=els[0].index;
+        const maps=[['fc-calibragem','SIM'],['fc-reaperto','SIM'],['fc-mapeamento','SIM']];
+        fcSetValue(maps[idx][0],maps[idx][1],maps[idx][1]);
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y}%`}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:'Nunito',size:11},color:'#64748B'}},
+        y:{grid:{color:'#E2E8F0'},min:0,max:100,ticks:{font:{family:'Nunito',size:11},color:'#64748B',callback:v=>v+'%'}}
+      }
+    }
+  });
+}
+
+function boolBadge(v){
+  const b=parseBool(v);
+  if(b==='SIM') return '<span class="badge badge-sim">SIM</span>';
+  if(b==='NÃO') return '<span class="badge badge-nao">NÃO</span>';
+  return '<span class="badge badge-nd">N.D.</span>';
+}
+
+function renderTabela(rows){
+  const tbody=document.getElementById('tabela-registros');
+  tbody.innerHTML='';
+  
+  const sorted=[...rows].sort((a,b)=>{
+    const da=toDate(a[keys.data]),db=toDate(b[keys.data]);
+    if(!da&&!db) return 0;
+    if(!da) return 1;
+    if(!db) return -1;
+    return db-da;
+  }).slice(0,200);
+  
+  if(!sorted.length){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Nenhum registro encontrado</td>';
+    tbody.appendChild(tr);
+    return;
+  }
+  
+  const fPlaca=FC['fc-placa']?.value||'';
+  
+  sorted.forEach(r=>{
+    const d=toDate(r[keys.data]);
+    const dataStr=d?d.toLocaleDateString('pt-BR'):(r[keys.data]||'—');
+    const placa=(r[keys.placa]||'—').trim().toUpperCase();
+    const tipo=(r[keys.tipo]||'—').trim().toUpperCase();
+    
+    const tr=document.createElement('tr');
+    if(fPlaca&&fPlaca===placa) tr.classList.add('selected');
+    
+    tr.innerHTML=`
+      <td style="white-space:nowrap;font-size:.78rem;color:var(--muted)">${dataStr}</td>
+      <td><strong style="font-size:.82rem">${placa}</strong></td>
+      <td>${getTipoBadge(tipo)}</td>
+      <td style="font-size:.78rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(r[keys.motorista]||'').trim()}">${(r[keys.motorista]||'—').trim()}</td>
+      <td>${boolBadge(r[keys.calibragem])}</td>
+      <td>${boolBadge(r[keys.reaperto])}</td>
+      <td>${boolBadge(r[keys.mapeamento])}</td>`;
+    
+    tr.addEventListener('click',()=>fcSetValue('fc-placa',placa,placa));
+    tbody.appendChild(tr);
+  });
+}
+
+function renderRanking(rows){
+  const map={};
+  
+  rows.forEach(r=>{
+    const p=(r[keys.placa]||'').trim().toUpperCase();
+    if(p) map[p]=(map[p]||0)+1;
+  });
+  
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const max=sorted[0]?.[1]||1;
+  
+  const container=document.getElementById('rank-placas');
+  container.innerHTML='';
+  
+  const fPlaca=FC['fc-placa']?.value||'';
+  
+  if(!sorted.length){
+    container.innerHTML='<p style="color:var(--muted);font-size:.8rem;text-align:center;padding:16px">Sem dados</p>';
+    return;
+  }
+  
+  sorted.forEach(([placa,qtd],i)=>{
+    const div=document.createElement('div');
+    div.className='rank-item'+(fPlaca===placa?' selected':'');
+    div.innerHTML=`
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-placa">${placa}</span>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${(qtd/max*100).toFixed(1)}%"></div></div>
+      <span class="rank-qtd">${qtd}</span>`;
+    
+    div.addEventListener('click',()=>fcSetValue('fc-placa',placa,placa));
+    container.appendChild(div);
+  });
+}
+
+async function loadData(){
+  showMsg('⏳','Carregando dados…','Buscando informações da planilha. Aguarde.');
+  
+  try{
+    const res=await fetch(`${CSV_URL}&_ts=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+    const text = await res.text();
+    console.log('CSV recebido (primeiros 500 caracteres):', text.substring(0, 500));
+    
+    const {headers,rows}=parseCSVRobust(text);
+    
+    if(!rows.length) {
+      console.error('Headers:', headers);
+      throw new Error('Nenhuma linha de dados encontrada.');
+    }
+    
+    console.log('Primeira linha:', rows[0]);
+    console.log('Headers:', headers);
+    
+    // Mapeamento EXATO com os nomes da sua planilha
+    keys={
+      data:        findKey(headers,'DATA'),
+      placa:       findKey(headers,'PLACAEQUIPAMENTO'),
+      tipo:        findKey(headers,'CAVALO / CARRETA'),
+      motorista:   findKey(headers,'NOME DO MOTORISTA'),
+      calibragem:  findKey(headers,'CALIBRAGEM DOS PNEUS'),
+      reaperto:    findKey(headers,'REAPERTO RODAS'),
+      mapeamento:  findKey(headers,'MAPEAMENTO PNEUS'),
+    };
+    
+    console.log('Chaves mapeadas:', keys);
+    
+    const falta=[];
+    if(!keys.data)       falta.push('DATA');
+    if(!keys.placa)      falta.push('PLACAEQUIPAMENTO');
+    if(!keys.tipo)       falta.push('CAVALO / CARRETA');
+    if(!keys.motorista)  falta.push('NOME DO MOTORISTA');
+    if(!keys.calibragem) falta.push('CALIBRAGEM DOS PNEUS');
+    if(!keys.reaperto)   falta.push('REAPERTO RODAS');
+    if(!keys.mapeamento) falta.push('MAPEAMENTO PNEUS');
+    
+    if(falta.length){
+      showMsg('⚠️','Colunas não encontradas',
+        `Campos faltando: ${falta.join(', ')}\n\nColunas encontradas: ${headers.join(' | ')}`);
+      console.error('Colunas faltando:', falta);
+      return;
+    }
+    
+    allRows=rows.filter(r=>r[keys.placa]?.trim()||r[keys.data]?.trim());
+    console.log('Total de linhas:', allRows.length);
+    
+    // Testa conversão de data na primeira linha
+    if(allRows.length>0){
+      console.log('Teste data primeira linha:', allRows[0][keys.data]);
+      console.log('Resultado:', toDate(allRows[0][keys.data]));
+    }
+    
+    initFilters(allRows);
+    document.getElementById('filter-count').textContent=`${allRows.length} registros`;
+    
+    hideMsg();
+    renderAll(allRows);
+    document.getElementById('last-update').textContent='Atualizado em: '+new Date().toLocaleString('pt-BR');
+    
+  }catch(err){
+    showMsg('❌','Não foi possível carregar',`Erro: ${err.message}`);
+    console.error('Erro:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded',loadData);
+</script>
+</body>
+</html>

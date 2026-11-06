@@ -1,0 +1,663 @@
+!DOCTYPE html
+html lang=pt-BR
+head
+meta charset=UTF-8
+meta name=viewport content=width=device-width, initial-scale=1.0
+titleReforma · Cia Verdetitle
+link href=httpsfonts.googleapis.comcss2family=Nunitowght@400;500;600;700;800;900&display=swap rel=stylesheet
+script src=httpscdn.jsdelivr.netnpmchart.js@4.4.3distchart.umd.min.jsscript
+script src=httpscdn.jsdelivr.netnpmchartjs-plugin-datalabels@2.2.0distchartjs-plugin-datalabels.min.jsscript
+style
+root{
+  --bg#F4F6FA;--card#FFFFFF;--border#E3E8F0;
+  --accent#1A5CFF;--green#2E7D32;--green-l#43A047;
+  --text#1A2340;--muted#6B7A99;--light#F0F3FA;
+  --font'Nunito',sans-serif;--radius12px;--gap12px;
+}
+,before,after{box-sizingborder-box;margin0;padding0;}
+body{font-familyvar(--font);backgroundvar(--bg);colorvar(--text);font-size14px;min-height100vh;}
+
+ HEADER 
+.header{backgroundlinear-gradient(135deg,#1b5e20 0%,#2e7d32 50%,#00695c 100%);padding0 24px;displayflex;align-itemscenter;justify-contentspace-between;min-height66px;gap14px;flex-wrapwrap;}
+.header-brand{displayflex;align-itemscenter;gap12px;}
+.logo-box{background#fff;border-radius8px;padding5px 9px;displayflex;align-itemscenter;gap6px;}
+.logo-text{displayflex;flex-directioncolumn;line-height1;}
+.logo-text spanfirst-child{font-size1rem;font-weight900;color#2e7d32;}
+.logo-text spanlast-child{font-size.52rem;color#6B7A99;letter-spacing.08em;text-transformuppercase;}
+.header-title{font-size1.7rem;font-weight900;color#fff;letter-spacing-.4px;}
+.header-right{displayflex;align-itemscenter;gap10px;flex-wrapwrap;}
+.header-ts{font-size.7rem;colorrgba(255,255,255,.75);text-alignright;line-height1.5;}
+#btn-refresh{displayflex;align-itemscenter;gap6px;backgroundrgba(255,255,255,.15);color#fff;border1.5px solid rgba(255,255,255,.35);padding6px 14px;border-radius999px;font-familyvar(--font);font-size.78rem;font-weight700;cursorpointer;transitionbackground .2s;}
+#btn-refreshhover{backgroundrgba(255,255,255,.25);}
+
+ FILTER BAR 
+.filterbar{backgroundvar(--card);border-bottom1px solid var(--border);padding9px 24px;displayflex;align-itemsflex-end;gap10px;flex-wrapwrap;}
+.fg{displayflex;flex-directioncolumn;gap4px;}
+.fg label{font-size.63rem;font-weight800;colorvar(--muted);text-transformuppercase;letter-spacing.08em;}
+
+ ── MULTI-SELECT COMBOBOX ── 
+.fc-wrap{positionrelative;min-width120px;max-width220px;}
+.fc-box{
+  displayflex;flex-wrapwrap;align-itemscenter;gap3px;
+  backgroundvar(--light);border1.5px solid var(--border);border-radius8px;
+  padding3px 26px 3px 7px;min-height32px;cursortext;
+  transitionborder-color .15s;
+}
+.fc-boxfocus-within{border-colorvar(--green-l);box-shadow0 0 0 3px rgba(67,160,71,.1);}
+.fc-box.has-value{border-colorvar(--green-l);background#E8F5E9;}
+.fc-chip{displayinline-flex;align-itemscenter;gap2px;background#C8E6C9;color#1b5e20;border-radius4px;font-size.68rem;font-weight800;padding1px 4px 1px 6px;white-spacenowrap;max-width110px;}
+.fc-chip spanfirst-child{overflowhidden;text-overflowellipsis;white-spacenowrap;}
+.fc-chip-x{cursorpointer;font-size.78rem;line-height1;color#2e7d32;padding0 1px;opacity.7;flex-shrink0;}
+.fc-chip-xhover{opacity1;}
+.fc-text{bordernone;outlinenone;backgroundtransparent;font-familyvar(--font);font-size.8rem;colorvar(--text);min-width40px;flex1;padding0 2px;}
+.fc-textplaceholder{colorvar(--muted);}
+.fc-arrow{positionabsolute;right8px;top50%;transformtranslateY(-50%);pointer-eventsnone;colorvar(--muted);font-size.7rem;}
+.fc-clear-all{positionabsolute;right8px;top50%;transformtranslateY(-50%);cursorpointer;colorvar(--muted);font-size.85rem;displaynone;backgroundnone;bordernone;padding0;line-height1;}
+.fc-box.has-value ~ .fc-arrow{displaynone;}
+.fc-box.has-value ~ .fc-clear-all{displayblock;}
+.fc-dropdown{positionabsolute;topcalc(100% + 3px);left0;min-width100%;max-width260px;backgroundvar(--card);border1.5px solid var(--border);border-radius10px;z-index999;max-height210px;overflow-yauto;displaynone;box-shadow0 8px 28px rgba(0,0,0,.12);}
+.fc-dropdown.open{displayblock;}
+.fc-option{displayflex;align-itemscenter;gap7px;padding7px 11px;font-size.8rem;cursorpointer;colorvar(--text);font-weight500;transitionbackground .1s;white-spacenowrap;}
+.fc-optionhover{background#E8F5E9;colorvar(--green);}
+.fc-option.selected{background#C8E6C9;colorvar(--green);font-weight700;}
+.fc-option.unavail{color#C8D8C8;cursornot-allowed;}
+.fc-option.unavailhover{backgroundtransparent;color#C8D8C8;}
+.fc-option.empty{colorvar(--muted);font-styleitalic;cursordefault;}
+.fc-chk{width13px;height13px;border-radius3px;border1.5px solid var(--border);displayflex;align-itemscenter;justify-contentcenter;flex-shrink0;background#fff;transition.1s;}
+.fc-option.selected .fc-chk{backgroundvar(--green);border-colorvar(--green);}
+.fc-chkafter{content'';displaynone;width3px;height6px;border2px solid #fff;border-topnone;border-leftnone;transformrotate(45deg);margin-top-2px;}
+.fc-option.selected .fc-chkafter{displayblock;}
+.fc-section-label{padding4px 11px 3px;font-size.61rem;font-weight800;text-transformuppercase;letter-spacing.08em;colorvar(--muted);backgroundvar(--light);border-bottom1px solid var(--border);}
+
+ PRESET BUTTONS 
+.preset-sep{width1px;height32px;backgroundvar(--border);align-selfcenter;margin0 2px;}
+.fg-preset{displayflex;flex-directioncolumn;gap4px;}
+.fg-preset label{font-size.63rem;font-weight800;colorvar(--muted);text-transformuppercase;letter-spacing.08em;}
+.preset-btns{displayflex;gap6px;flex-wrapwrap;}
+.btn-preset{
+  displayflex;align-itemscenter;gap5px;
+  backgroundvar(--light);border1.5px solid var(--border);
+  colorvar(--text);padding5px 12px;border-radius999px;
+  font-familyvar(--font);font-size.75rem;font-weight700;
+  cursorpointer;transition.15s;white-spacenowrap;
+}
+.btn-presethover{border-colorvar(--accent);colorvar(--accent);background#EEF3FF;}
+.btn-preset.active{background#EEF3FF;border-colorvar(--accent);colorvar(--accent);}
+.btn-preset .preset-icon{font-size.85rem;}
+
+#btn-limpar{backgroundnone;border1.5px solid var(--border);colorvar(--muted);padding5px 12px;border-radius999px;font-familyvar(--font);font-size.75rem;font-weight700;cursorpointer;transition.15s;white-spacenowrap;align-selfflex-end;}
+#btn-limparhover{border-color#EF5350;color#EF5350;}
+.filter-count{margin-leftauto;font-size.78rem;font-weight800;colorvar(--green);align-selfflex-end;}
+
+ CONTENT 
+.content{padding14px 24px;displayflex;flex-directioncolumn;gapvar(--gap);}
+.top-row{displaygrid;grid-template-columns190px 1fr 1fr;gapvar(--gap);}
+.kpi-sidebar{displayflex;flex-directioncolumn;gapvar(--gap);}
+.kpi-card{backgroundvar(--card);border1px solid var(--border);border-radiusvar(--radius);padding14px 16px;box-shadow0 1px 5px rgba(0,0,0,.04);displayflex;align-itemscenter;gap12px;}
+.kpi-icon-box{width36px;height36px;border-radius8px;displayflex;align-itemscenter;justify-contentcenter;font-size1.1rem;flex-shrink0;}
+.kpi-label{font-size.67rem;colorvar(--muted);font-weight600;line-height1.2;}
+.kpi-value{font-size1.3rem;font-weight900;colorvar(--text);letter-spacing-.4px;line-height1.1;}
+.kpi-value.med{font-size.95rem;}
+.panel{backgroundvar(--card);border1px solid var(--border);border-radiusvar(--radius);overflowhidden;box-shadow0 1px 5px rgba(0,0,0,.04);}
+.panel-head{padding9px 14px 8px;border-bottom1px solid var(--border);font-size.67rem;font-weight800;text-transformuppercase;letter-spacing.09em;colorvar(--muted);displayflex;align-itemscenter;gap8px;backgroundvar(--light);}
+.panel-body{padding12px;positionrelative;}
+.clk-badge{margin-leftauto;font-size.58rem;background#E8F5E9;color#2E7D32;padding2px 7px;border-radius999px;font-weight700;text-transformnone;letter-spacing0;}
+.bottom-row{displaygrid;grid-template-columns1fr 1fr;gapvar(--gap);}
+.tbl-wrap{overflowauto;max-height260px;}
+table{width100%;border-collapsecollapse;font-size.76rem;}
+thead th{backgroundvar(--light);padding7px 10px;font-size.62rem;font-weight800;text-transformuppercase;letter-spacing.06em;colorvar(--muted);text-alignleft;white-spacenowrap;positionsticky;top0;z-index1;border-bottom1px solid var(--border);}
+tbody tr{cursorpointer;transitionbackground .1s;}
+tbody trhover{background#F1F8E9;}
+tbody tr.row-sel{background#DCEDC8!important;}
+tbody td{padding7px 10px;border-bottom1px solid var(--border);vertical-alignmiddle;}
+.td-m{colorvar(--muted);font-size.72rem;}
+.tbl-total td{backgroundvar(--light);font-weight800;border-bottom2px solid var(--border);}
+.badge-tipo{displayinline-block;padding2px 8px;border-radius999px;font-size.63rem;font-weight800;}
+.tipo-recape{background#E8F5E9;color#2E7D32;}
+.tipo-conserto{background#E3F2FD;color#1565C0;}
+.tipo-outro{background#F3E5F5;color#6A1B9A;}
+#toast{positionfixed;bottom20px;left50%;transformtranslateX(-50%) translateY(60px);background#1A2340;color#fff;padding8px 18px;border-radius999px;font-size.76rem;font-weight600;z-index9999;transitiontransform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity0;pointer-eventsnone;white-spacenowrap;}
+#toast.show{transformtranslateX(-50%) translateY(0);opacity1;}
+#overlay{displaynone;positionfixed;inset0;backgroundrgba(244,246,250,.93);z-index200;align-itemscenter;justify-contentcenter;}
+#overlay.on{displayflex;}
+.ov-box{backgroundvar(--card);border1px solid var(--border);border-radiusvar(--radius);padding30px 38px;text-aligncenter;box-shadow0 8px 40px rgba(0,0,0,.12);max-width480px;}
+.ov-box .ico{font-size2rem;margin-bottom10px;}
+.ov-box h2{font-size.92rem;font-weight800;margin-bottom6px;}
+.ov-box p{font-size.74rem;colorvar(--muted);line-height1.7;word-breakbreak-all;text-alignleft;}
+@media(max-width1100px){.top-row,.bottom-row{grid-template-columns1fr;}}
+@media(max-width640px){.content,.filterbar,.header{padding-left12px;padding-right12px;}}
+style
+head
+body
+div id=toastdiv
+div id=overlaydiv class=ov-boxdiv class=ico id=ov-ico⏳divh2 id=ov-titleCarregando…h2p id=ov-bodyAguarde.pdivdiv
+
+div class=header
+  div class=header-brand
+    div class=logo-box
+      svg width=28 height=28 viewBox=0 0 40 40 fill=nonepath d=M5 8L20 32L35 8 stroke=#2e7d32 stroke-width=5 stroke-linecap=round stroke-linejoin=roundpath d=M12 8L20 22L28 8 stroke=#43a047 stroke-width=3 stroke-linecap=round stroke-linejoin=roundsvg
+      div class=logo-textspanCia VerdespanspanLogísticaspandiv
+    div
+    div class=header-titleReformadiv
+  div
+  div class=header-right
+    div class=header-ts id=last-update—div
+    button id=btn-refresh onclick=loadData()
+      svg width=11 height=11 viewBox=0 0 24 24 fill=none stroke=currentColor stroke-width=2.5 stroke-linecap=round stroke-linejoin=roundpath d=M23 4v6h-6path d=M1 20v-6h6path d=M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15svg
+      Atualizar
+    button
+  div
+div
+
+div class=filterbar
+  div class=fglabelAnolabeldiv class=fc-wrap id=fc-anodivdiv
+  div class=fglabelMêslabeldiv class=fc-wrap id=fc-mesdivdiv
+  div class=fglabelReformadorlabeldiv class=fc-wrap id=fc-reformadordivdiv
+  div class=fglabelTipolabeldiv class=fc-wrap id=fc-tipodivdiv
+  div class=fglabelBandalabeldiv class=fc-wrap id=fc-bandadivdiv
+  div class=preset-sepdiv
+  div class=fg-preset
+    labelFiltros Rápidoslabel
+    div class=preset-btns
+      button class=btn-preset id=preset-diretoria onclick=applyPreset('diretoria')
+        span class=preset-icon📊span Diretoria
+      button
+    div
+  div
+  button id=btn-limpar onclick=clearFilters()✕ Limparbutton
+  span class=filter-count id=filter-count— registrosspan
+div
+
+div class=content
+  div class=top-row
+    div class=kpi-sidebar
+      div class=kpi-card
+        div class=kpi-icon-box style=background#EEF3FF🔧div
+        div class=kpi-info
+          div class=kpi-labelQtd de Reformasdiv
+          div class=kpi-value id=kpi-qtd—div
+        div
+      div
+      div class=kpi-card
+        div class=kpi-icon-box style=background#E8F5E9💰div
+        div class=kpi-info
+          div class=kpi-labelCusto de Reformadiv
+          div class=kpi-value med id=kpi-custo—div
+        div
+      div
+      div class=kpi-card
+        div class=kpi-icon-box style=background#FFF7ED📊div
+        div class=kpi-info
+          div class=kpi-labelCusto Médiodiv
+          div class=kpi-value med id=kpi-medio—div
+        div
+      div
+    div
+    div class=panel
+      div class=panel-head📈 Evolução Mensal de Reformas span class=clk-badgeclicávelspandiv
+      div class=panel-body style=height210pxcanvas id=chart-linhacanvasdiv
+    div
+    div class=panel
+      div class=panel-head📊 Qtd por Banda span class=clk-badgeclicávelspandiv
+      div class=panel-body style=height210pxcanvas id=chart-recapescanvasdiv
+    div
+  div
+
+  div class=bottom-row
+    div class=panel
+      div class=panel-head🏆 [Top 10] Qtd por Reformador span class=clk-badgeclicávelspandiv
+      div class=panel-body style=height250pxcanvas id=chart-reform-qtdcanvasdiv
+    div
+    div class=panel
+      div class=panel-head💰 [Top 10] Custo por Reformador span class=clk-badgeclicávelspandiv
+      div class=panel-body style=height250pxcanvas id=chart-reform-custocanvasdiv
+    div
+  div
+
+  div class=panel
+    div class=panel-head📋 Detalhes das Reformas span class=clk-badgeclicávelspandiv
+    div class=panel-body style=padding0
+      div class=tbl-wrap
+        table
+          thead
+            tr
+              thNº PneuththDescriçãoththReformadorth
+              thBandaththTipoththNº Notath
+              th style=text-alignrightVl. Unitth
+              th style=text-alignrightConsertoth
+              th style=text-alignrightDescontoth
+              th style=text-alignrightValor totalth
+            tr
+          thead
+          tbody id=tbl-bodytbody
+        table
+      div
+    div
+  div
+div
+
+script
+const CSV_URL = httpsdocs.google.comspreadsheetsde2PACX-1vTAhHScobL_DoiHWgDGM9y6jc7EdA994vQ4vI37Ke9Q7a7gh8bK6-Kn0xzRS7mXjiFQW9e9YjJ1KNBipubgid=1020534782&single=true&output=csv;
+
+let allRows = [], keys = {};
+let cLinha, cRecapes, cReformQtd, cReformCusto;
+
+const PRESETS = {
+  diretoria {
+    label 'Diretoria',
+    filters {
+      'fc-tipo' ['Reforma'],
+      'fc-banda' [],
+      'fc-reformador' [],
+      'fc-ano' [],
+      'fc-mes' [],
+    }
+  },
+};
+
+let activePreset = null;
+
+const MESES_NOME = {'01''Janeiro','02''Fevereiro','03''Março','04''Abril','05''Maio','06''Junho','07''Julho','08''Agosto','09''Setembro','10''Outubro','11''Novembro','12''Dezembro'};
+const MESES_ABREV = {'01''Jan','02''Fev','03''Mar','04''Abr','05''Mai','06''Jun','07''Jul','08''Ago','09''Set','10''Out','11''Nov','12''Dez'};
+const FILTER_IDS = ['fc-ano', 'fc-mes', 'fc-reformador', 'fc-tipo', 'fc-banda'];
+const FMAP = {'fc-ano''ano', 'fc-mes''mes', 'fc-reformador''reformador', 'fc-tipo''tipo', 'fc-banda''banda'};
+const FC = {};
+const COLORS = ['#43A047','#1565C0','#F9A825','#E53935','#8E24AA','#00897B','#FF7043','#5E35B1','#00ACC1','#558B2F'];
+
+function norm(s) { return String(s'').toLowerCase().normalize('NFD').replace([u0300-u036f]g,'').replace([]+g,'').replace([s_-.]+g,''); }
+function findKey(headers, candidates) {
+  for (let t of candidates) {
+    let nt = norm(t);
+    let r = headers.find(h = norm(h) === nt)  headers.find(h = norm(h).includes(nt)  nt.includes(norm(h)))  headers.find(h = h.trim() === t.trim());
+    if (r) return r;
+  }
+  return null;
+}
+function parseMoney(v) {
+  if (!v  v === '') return 0;
+  let s = String(v).trim();
+  s = s.replace(R$sg, '').replace(sg, '');
+  s = s.replace(.g, '').replace(',', '.');
+  let num = parseFloat(s);
+  return isNaN(num)  0  num;
+}
+function toDate(v) {
+  if (!v) return null;
+  let s = String(v).trim();
+  const mo = {jan0,fev1,mar2,abr3,mai4,jun5,jul6,ago7,set8,out9,nov10,dez11};
+  const m0 = s.match(^(d{1,2})[-](d{1,2})[-](d{2,4})(s+d{1,2}d{2}(d{2}))$);
+  if (m0) { const y = m0[3].length===2'20'+m0[3]m0[3]; return new Date(+y, +m0[2]-1, +m0[1]); }
+  const m1 = s.match((d{1,2})s+des+([a-zç]+).s+des+(d{4})i);
+  if (m1) { const idx = mo[m1[2].toLowerCase().slice(0,3)]; if (idx!==undefined) return new Date(+m1[3], idx, +m1[1]); }
+  const d = new Date(s);
+  return isNaN(d)  null  d;
+}
+function fmtBRL(v) { return v.toLocaleString('pt-BR', {style'currency', currency'BRL'}); }
+function fmtN(v) { return v.toLocaleString('pt-BR'); }
+function kill(r) { try { if (r) r.destroy(); } catch(_) {} return null; }
+let toastT;
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() = t.classList.remove('show'), 2200); }
+function showOv(i,t,b) { document.getElementById('ov-ico').textContent = i; document.getElementById('ov-title').textContent = t; document.getElementById('ov-body').textContent = b; document.getElementById('overlay').classList.add('on'); }
+function hideOv() { document.getElementById('overlay').classList.remove('on'); }
+
+function parseCSV(raw) {
+  const lines = raw.split(rn);
+  const sep = (lines[0]'').split(';').length  (lines[0]'').split(',').length  ';'  ',';
+  function pl(l) { const f=[]; let c='', inQ=false; for(let i=0;il.length;i++) { const ch=l[i]; if(ch==='') { if(inQ && l[i+1]==='') { c+=''; i++; } else inQ=!inQ; } else if(ch===sep && !inQ) { f.push(c.trim()); c=''; } else c+=ch; } f.push(c.trim()); return f; }
+  if(lines.length2) return {headers[], rows[]};
+  const headers = pl(lines[0]);
+  const rows = [];
+  for(let i=1;ilines.length;i++) { const ln = lines[i].trim(); if(!ln) continue; const vals = pl(ln); if(vals.every(v=!v)) continue; const obj = {}; headers.forEach((h,idx)={ obj[h]=vals[idx]''; }); rows.push(obj); }
+  return {headers, rows};
+}
+
+function getRowVals(r) {
+  const d = toDate(r[keys.dataEnvio]  r[keys.data]);
+  return {
+    ano d  String(d.getFullYear())  '',
+    mes d  String(d.getMonth()+1).padStart(2,'0')  '',
+    reformador (r[keys.reformador]  '').trim(),
+    tipo (r[keys.tipo]  '').trim(),
+    banda (r[keys.banda]  '').trim(),
+  };
+}
+
+function matchExcept(rv, xid) {
+  for (const id of FILTER_IDS) {
+    if (id === xid) continue;
+    const vs = FC[id].values;
+    if (!vs  vs.size === 0) continue;
+    if (!vs.has(rv[FMAP[id]]  '')) return false;
+  }
+  return true;
+}
+function computeAvail() {
+  const av = {};
+  for (const id of FILTER_IDS) {
+    const s = new Set();
+    for (const r of allRows) {
+      const rv = getRowVals(r);
+      if (matchExcept(rv, id) && rv[FMAP[id]]) s.add(rv[FMAP[id]]);
+    }
+    av[id] = s;
+  }
+  return av;
+}
+
+function getLabel(wid, opt) { return wid === 'fc-mes'  (MESES_NOME[opt]  opt)  opt; }
+
+function makeChip(wid, val) {
+  const c = document.createElement('span'); c.className = 'fc-chip'; c.dataset.val = val;
+  const l = document.createElement('span'); l.textContent = getLabel(wid, val);
+  const x = document.createElement('span'); x.className = 'fc-chip-x'; x.textContent = '×';
+  x.addEventListener('mousedown', e = { e.preventDefault(); e.stopPropagation(); fcToggle(wid, val); });
+  c.appendChild(l); c.appendChild(x);
+  return c;
+}
+
+function fcRenderDD(wid, q) {
+  const wrap = document.getElementById(wid); if (!wrap) return;
+  const dd = wrap.querySelector('.fc-dropdown');
+  const st = FC[wid]; if (!st) return;
+  const avSet = computeAvail()[wid];
+  const query = (q  '').toLowerCase().trim();
+  const fq = l = query  l.filter(o = getLabel(wid, o).toLowerCase().includes(query))  l;
+  const av = fq(st.allOptions.filter(o = avSet.has(o)));
+  const unav = fq(st.allOptions.filter(o = !avSet.has(o)));
+  dd.innerHTML = '';
+  function mk(opt, isU) {
+    const div = document.createElement('div');
+    const sel = st.values.has(opt);
+    div.className = 'fc-option' + (sel  ' selected'  '') + (isU  ' unavail'  '');
+    const chk = document.createElement('span'); chk.className = 'fc-chk';
+    const lbl = document.createElement('span');
+    if (query && !isU) {
+      const s = getLabel(wid, opt);
+      const idx = s.toLowerCase().indexOf(query);
+      if (idx = 0) {
+        lbl.innerHTML = s.slice(0, idx) + 'em style=font-stylenormal;font-weight800;colorvar(--green)' + s.slice(idx, idx+query.length) + 'em' + s.slice(idx+query.length);
+      } else lbl.textContent = s;
+    } else lbl.textContent = getLabel(wid, opt);
+    div.appendChild(chk); div.appendChild(lbl);
+    if (!isU) div.addEventListener('mousedown', e = { e.preventDefault(); fcToggle(wid, opt); });
+    return div;
+  }
+  if (av.length) {
+    if (unav.length) { const l = document.createElement('div'); l.className = 'fc-section-label'; l.textContent = 'Disponíveis'; dd.appendChild(l); }
+    av.forEach(o = dd.appendChild(mk(o, false)));
+  }
+  if (unav.length) {
+    const l = document.createElement('div'); l.className = 'fc-section-label'; l.textContent = 'Sem resultado com filtros atuais'; dd.appendChild(l);
+    unav.forEach(o = dd.appendChild(mk(o, true)));
+  }
+  if (!av.length && !unav.length) { const e = document.createElement('div'); e.className = 'fc-option empty'; e.textContent = 'Nenhum resultado'; dd.appendChild(e); }
+}
+
+function fcToggle(wid, val) {
+  const st = FC[wid]; if (!st) return;
+  if (st.values.has(val)) { st.values.delete(val); toast(`✕ ${getLabel(wid, val)}`); }
+  else { st.values.add(val); toast(`✓ ${getLabel(wid, val)}`); }
+  activePreset = null; syncPresetButtons();
+  fcSyncBox(wid); applyFilters();
+  const wrap = document.getElementById(wid);
+  const txt = wrap.querySelector('.fc-text');
+  fcRenderDD(wid, txt  txt.value  '');
+}
+
+function fcSyncBox(wid) {
+  const wrap = document.getElementById(wid); if (!wrap) return;
+  const st = FC[wid]; if (!st) return;
+  const box = wrap.querySelector('.fc-box');
+  const txt = wrap.querySelector('.fc-text');
+  box.querySelectorAll('.fc-chip').forEach(c = c.remove());
+  st.values.forEach(v = box.insertBefore(makeChip(wid, v), txt));
+  box.classList.toggle('has-value', st.values.size  0);
+  txt.placeholder = st.values.size === 0  'Todos'  '';
+}
+
+function fcCreate(wid, opts) {
+  const wrap = document.getElementById(wid); if (!wrap) return; wrap.innerHTML = '';
+  FC[wid] = { values new Set(), allOptions [...opts] };
+  const box = document.createElement('div'); box.className = 'fc-box';
+  const txt = document.createElement('input'); txt.type = 'text'; txt.className = 'fc-text'; txt.placeholder = 'Todos'; txt.autocomplete = 'off';
+  box.appendChild(txt);
+  const arr = document.createElement('span'); arr.className = 'fc-arrow'; arr.textContent = '▾';
+  const clrAll = document.createElement('button'); clrAll.className = 'fc-clear-all'; clrAll.textContent = '×';
+  clrAll.addEventListener('mousedown', e = { e.preventDefault(); FC[wid].values.clear(); fcSyncBox(wid); applyFilters(); activePreset = null; syncPresetButtons(); toast('Filtro limpo'); });
+  const dd = document.createElement('div'); dd.className = 'fc-dropdown';
+  wrap.appendChild(box); wrap.appendChild(arr); wrap.appendChild(clrAll); wrap.appendChild(dd);
+  box.addEventListener('mousedown', e = { if (e.target.closest('.fc-chip-x')) return; txt.focus(); });
+  txt.addEventListener('focus', () = { fcRenderDD(wid, txt.value); dd.classList.add('open'); });
+  txt.addEventListener('input', () = { fcRenderDD(wid, txt.value); dd.classList.add('open'); });
+  txt.addEventListener('keydown', e = {
+    if (e.key === 'Backspace' && txt.value === '' && FC[wid].values.size  0) { const last = [...FC[wid].values].pop(); fcToggle(wid, last); }
+    if (e.key === 'Escape') { dd.classList.remove('open'); txt.blur(); }
+  });
+  document.addEventListener('click', e = { if (!wrap.contains(e.target)) { dd.classList.remove('open'); txt.value = ''; } });
+}
+
+function initFilters(rows) {
+  const uniq = fn = [...new Set(rows.map(fn).filter(Boolean))].sort();
+  fcCreate('fc-ano', uniq(r = getRowVals(r).ano));
+  fcCreate('fc-mes', ['01','02','03','04','05','06','07','08','09','10','11','12'].filter(m = rows.some(r = getRowVals(r).mes === m)));
+  fcCreate('fc-reformador', uniq(r = (r[keys.reformador]  '').trim()));
+  fcCreate('fc-tipo', uniq(r = (r[keys.tipo]  '').trim()));
+  fcCreate('fc-banda', uniq(r = (r[keys.banda]  '').trim()));
+}
+
+function applyFilters() {
+  const filtered = allRows.filter(r = {
+    const rv = getRowVals(r);
+    for (const id of FILTER_IDS) {
+      const vs = FC[id].values;
+      if (!vs  vs.size === 0) continue;
+      if (!vs.has(rv[FMAP[id]]  '')) return false;
+    }
+    return true;
+  });
+  document.getElementById('filter-count').textContent = `${filtered.length} registro${filtered.length !== 1  's'  ''}`;
+  renderAll(filtered);
+}
+
+function clearFilters() {
+  for (const id of FILTER_IDS) { if (FC[id]) { FC[id].values.clear(); fcSyncBox(id); } }
+  activePreset = null; syncPresetButtons();
+  applyFilters(); toast('Filtros removidos');
+}
+
+function applyPreset(presetKey) {
+  const preset = PRESETS[presetKey];
+  if (!preset) return;
+  if (activePreset === presetKey) { clearFilters(); return; }
+  for (const id of FILTER_IDS) { if (FC[id]) { FC[id].values.clear(); fcSyncBox(id); } }
+  const pFilters = preset.filters;
+  for (const [wid, vals] of Object.entries(pFilters)) {
+    if (!FC[wid]) continue;
+    for (const v of vals) {
+      const match = FC[wid].allOptions.find(o = o === v)  FC[wid].allOptions.find(o = norm(o) === norm(v));
+      if (match) FC[wid].values.add(match);
+    }
+    fcSyncBox(wid);
+  }
+  activePreset = presetKey;
+  syncPresetButtons();
+  applyFilters();
+  toast(`Filtro ${preset.label}`);
+}
+
+function syncPresetButtons() {
+  for (const key of Object.keys(PRESETS)) {
+    const btn = document.getElementById(`preset-${key}`);
+    if (btn) btn.classList.toggle('active', activePreset === key);
+  }
+}
+
+function renderAll(rows) { renderKPIs(rows); renderLinha(rows); renderRecapes(rows); renderReformadores(rows); renderTabela(rows); }
+
+ KPI usando TOTAL LÍQUIDO (coluna O)
+function renderKPIs(rows) {
+  let somaTotal = 0;
+  let contagem = 0;
+  
+  rows.forEach(r = {
+    const val = parseMoney(r[keys.totalLiquido]);
+    if (val !== 0) {
+      somaTotal += val;
+      contagem++;
+    }
+  });
+  
+  document.getElementById('kpi-qtd').textContent = fmtN(rows.length);
+  document.getElementById('kpi-custo').textContent = fmtBRL(somaTotal);
+  document.getElementById('kpi-medio').textContent = fmtBRL(contagem  0  somaTotal  contagem  0);
+}
+
+const CD = { responsive true, maintainAspectRatio false, plugins { legend { display false } }, scales {
+  x { grid { color '#F0F3FA' }, ticks { color '#6B7A99', font { family 'Nunito', size 10 } } },
+  y { grid { color '#F0F3FA' }, ticks { color '#6B7A99', font { family 'Nunito', size 10 } } }
+} };
+
+function renderLinha(rows) {
+  const map = {};
+  rows.forEach(r = {
+    const d = toDate(r[keys.dataEnvio]  r[keys.data]); if (!d  isNaN(d)) return;
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const lbl = `${MESES_ABREV[mm]}${d.getFullYear()}`;
+    map[lbl] = (map[lbl]  0) + 1;
+  });
+  const abrevs = Object.values(MESES_ABREV);
+  const labels = Object.keys(map).sort((a, b) = { const [ma, ya] = a.split(''); const [mb, yb] = b.split(''); const ia = abrevs.indexOf(ma), ib = abrevs.indexOf(mb); return (+ya - +yb)  ia - ib; });
+  cLinha = kill(cLinha);
+  Chart.register(ChartDataLabels);
+  cLinha = new Chart(document.getElementById('chart-linha').getContext('2d'), {
+    type 'line',
+    data { labels, datasets [{ label 'Reformas', data labels.map(l = map[l]), borderColor '#E53935', backgroundColor 'rgba(229,57,53,.07)', borderWidth 2, pointRadius 3, pointHoverRadius 6, pointBackgroundColor '#fff', pointBorderColor '#E53935', pointBorderWidth 2, tension .35, fill true }] },
+    options { ...CD, onClick (e, els) = { if (!els.length) return; const lbl = labels[els[0].index]; const [ma, yyyy] = lbl.split(''); const mNum = Object.keys(MESES_ABREV).find(k = MESES_ABREV[k] === ma); if (mNum) { fcToggle('fc-ano', yyyy); fcToggle('fc-mes', mNum); } }, plugins { legend { display false }, datalabels { color '#6B7A99', font { size 8, family 'Nunito' }, formatter v = fmtN(v), anchor 'end', align 'top', offset 1, display ctx = ctx.dataIndex % Math.max(1, Math.floor(labels.length  16)) === 0  ctx.dataIndex === labels.length - 1 }, tooltip { callbacks { label c = `${fmtN(c.parsed.y)} reformas` } } } }
+  });
+}
+
+function renderRecapes(rows) {
+  const map = {};
+  rows.forEach(r = {
+    let b = (r[keys.banda]  '').trim();
+    if (!b) return;
+    if (b.toUpperCase().includes('RECUSADO')) b = 'RECUSADO';
+    map[b] = (map[b]  0) + 1;
+  });
+  const sorted = Object.entries(map).sort((a, b) = b[1] - a[1]).slice(0, 10);
+  cRecapes = kill(cRecapes);
+  if (!sorted.length) { cRecapes = null; return; }
+  cRecapes = new Chart(document.getElementById('chart-recapes').getContext('2d'), {
+    type 'bar',
+    data { labels sorted.map(([k]) = k), datasets [{ data sorted.map(([, v]) = v), backgroundColor COLORS.map(c = c + 'CC'), borderRadius 4, borderSkipped false }] },
+    options { ...CD, indexAxis 'y', onClick (e, els) = { if (!els.length) return; fcToggle('fc-banda', sorted[els[0].index][0]); }, plugins { legend { display false }, datalabels { color '#6B7A99', font { size 9, family 'Nunito' }, formatter v = fmtN(v), anchor 'end', align 'right', clamp true }, tooltip { callbacks { label c = `${fmtN(c.parsed.x)} recapes` } } }, scales { x { ...CD.scales.x, ticks { ...CD.scales.x.ticks, precision 0 } }, y { ...CD.scales.y, grid { display false } } }, layout { padding { right 40 } } }
+  });
+}
+
+function renderReformadores(rows) {
+  const mapQtd = {};
+  const mapCusto = {};
+  
+  rows.forEach(r = {
+    const ref = (r[keys.reformador]  'Sem Reformador').trim();
+    mapQtd[ref] = (mapQtd[ref]  0) + 1;
+    const val = parseMoney(r[keys.totalLiquido]);
+    if (val !== 0) {
+      mapCusto[ref] = (mapCusto[ref]  0) + val;
+    }
+  });
+  
+  const sortedQtd = Object.entries(mapQtd).sort((a, b) = b[1] - a[1]).slice(0, 10);
+  const sortedCusto = Object.entries(mapCusto).sort((a, b) = b[1] - a[1]).slice(0, 10);
+
+  cReformQtd = kill(cReformQtd);
+  if (sortedQtd.length) {
+    cReformQtd = new Chart(document.getElementById('chart-reform-qtd').getContext('2d'), {
+      type 'bar', data { labels sortedQtd.map(([l]) = l.length  20  l.slice(0, 18) + '…'  l), datasets [{ data sortedQtd.map(([, v]) = v), backgroundColor COLORS.map(c = c + 'CC'), borderRadius 3, borderSkipped false }] },
+      options { ...CD, indexAxis 'y', onClick (e, els) = { if (!els.length) return; fcToggle('fc-reformador', sortedQtd[els[0].index][0]); }, plugins { legend { display false }, datalabels { color '#6B7A99', font { size 9, family 'Nunito' }, formatter v = fmtN(v), anchor 'end', align 'right', clamp true }, tooltip { callbacks { label c = `${fmtN(c.parsed.x)} reformas` } } }, scales { x { ...CD.scales.x, ticks { ...CD.scales.x.ticks, precision 0 } }, y { ...CD.scales.y, grid { display false } } }, layout { padding { right 40 } } }
+    });
+  }
+
+  cReformCusto = kill(cReformCusto);
+  if (sortedCusto.length) {
+    cReformCusto = new Chart(document.getElementById('chart-reform-custo').getContext('2d'), {
+      type 'bar', data { labels sortedCusto.map(([l]) = l.length  20  l.slice(0, 18) + '…'  l), datasets [{ data sortedCusto.map(([, v]) = v), backgroundColor COLORS.map(c = c + 'CC'), borderRadius 3, borderSkipped false }] },
+      options { ...CD, indexAxis 'y', onClick (e, els) = { if (!els.length) return; fcToggle('fc-reformador', sortedCusto[els[0].index][0]); }, plugins { legend { display false }, datalabels { color '#6B7A99', font { size 9, family 'Nunito' }, formatter v = fmtBRL(v), anchor 'end', align 'right', clamp true }, tooltip { callbacks { label c = fmtBRL(c.parsed.x) } } }, scales { x { ...CD.scales.x, ticks { ...CD.scales.x.ticks, callback v = 'R$ ' + v.toLocaleString('pt-BR') } }, y { ...CD.scales.y, grid { display false } } }, layout { padding { right 110 } } }
+    });
+  }
+}
+
+function renderTabela(rows) {
+  const sorted = [...rows].sort((a, b) = parseMoney(b[keys.totalLiquido]) - parseMoney(a[keys.totalLiquido]));
+  const totalGeral = sorted.reduce((s, r) = s + parseMoney(r[keys.totalLiquido]), 0);
+  const tbody = document.getElementById('tbl-body');
+  tbody.innerHTML = '';
+  const tr0 = document.createElement('tr'); tr0.className = 'tbl-total';
+  tr0.innerHTML = `td colspan=9strongTotais (${fmtN(sorted.length)} registros)strong td style=text-alignrightstrong${fmtBRL(totalGeral)}strong`;
+  tbody.appendChild(tr0);
+  sorted.slice(0, 300).forEach(r = {
+    const pneu = (r[keys.numPneu]  '—').trim();
+    const desc = (r[keys.descricao]  '—').trim();
+    const ref = (r[keys.reformador]  '—').trim();
+    const banda = (r[keys.banda]  '—').trim();
+    const tipo = (r[keys.tipo]  '—').trim();
+    const nota = (r[keys.nota]  '—').trim();
+    const vUnit = parseMoney(r[keys.vlUnit]);
+    const cons = parseMoney(r[keys.conserto]);
+    const desc2 = parseMoney(r[keys.desconto]);
+    const total = parseMoney(r[keys.totalLiquido]);
+    const tn = norm(tipo);
+    const badge = tn.includes('recape')  tn.includes('reform')  tn.includes('borrachudo')  tn.includes('liso')  'tipo-recape'  (tn.includes('conserto')  tn.includes('reparo')  'tipo-conserto'  'tipo-outro');
+    const tr = document.createElement('tr');
+    if (FC['fc-reformador'].values.has(ref)) tr.classList.add('row-sel');
+    tr.innerHTML = `td class=td-m${pneu} td style=min-width140px${desc} td class=td-m${ref} td class=td-m${banda} tdspan class=badge-tipo ${badge}${tipo}span td class=td-m${nota} td style=text-alignright class=td-m${vUnit !== 0  fmtBRL(vUnit)  '—'} td style=text-alignright class=td-m${cons !== 0  fmtBRL(cons)  '—'} td style=text-alignright class=td-m${desc2 !== 0  fmtBRL(desc2)  '—'} td style=text-alignright;font-weight700${total !== 0  fmtBRL(total)  '—'}`;
+    tr.addEventListener('click', () = fcToggle('fc-reformador', ref));
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadData() {
+  showOv('⏳', 'Carregando dados…', 'Aguarde.');
+  try {
+    const res = await fetch(`${CSV_URL}&_ts=${Date.now()}`, { cache 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buf = await res.arrayBuffer();
+    const text = new TextDecoder('utf-8').decode(buf);
+    const { headers, rows } = parseCSV(text);
+    if (!rows.length) throw new Error('Nenhuma linha encontrada.');
+    
+    keys = {
+      numPneu findKey(headers, ['Nº pneu', 'N pneu', 'NUM PNEU', 'Nº Pneu']),
+      dataEnvio findKey(headers, ['Data envio', 'DATA ENVIO', 'Data de envio']),
+      descricao findKey(headers, ['Descrição do Pneu', 'Descricao do Pneu', 'DESCRICAO']),
+      reformador findKey(headers, ['Reformador', 'REFORMADOR']),
+      banda findKey(headers, ['BANDA', 'Banda']),
+      tipo findKey(headers, ['Tipo', 'TIPO']),
+      vlUnit findKey(headers, ['VALOR UNIT', 'Valor Unit', 'VALOR UNITARIO']),
+      conserto findKey(headers, ['CONSERTO', 'Conserto']),
+      desconto findKey(headers, ['DESCONTO', 'Desconto']),
+      nota findKey(headers, ['Nº da Nota', 'N DA NOTA', 'NOTA', 'Nota']),
+      data findKey(headers, ['DATA', 'Data']),
+      totalLiquido findKey(headers, ['Total Líquido', 'TOTAL LÍQUIDO', 'Total Liquido', 'TOTAL LIQUIDO'])
+    };
+    
+    allRows = rows.filter(r = r[keys.numPneu].trim()  r[keys.reformador].trim());
+    initFilters(allRows);
+    document.getElementById('filter-count').textContent = `${allRows.length} registros`;
+    hideOv();
+    renderAll(allRows);
+    document.getElementById('last-update').textContent = 'Última atualização ' + new Date().toLocaleString('pt-BR');
+  } catch (err) {
+    hideOv();
+    showOv('❌', 'Erro ao carregar', err.message);
+    console.error(err);
+  }
+}
+
+document.getElementById('btn-refresh').onclick = loadData;
+document.getElementById('btn-limpar').onclick = clearFilters;
+document.getElementById('preset-diretoria').onclick = () = applyPreset('diretoria');
+loadData();
+script
+body
+html
